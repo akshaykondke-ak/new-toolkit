@@ -1,0 +1,348 @@
+# Pentoolkit Configuration File
+# This file contains default settings for all modules and can be customized per environment
+
+# Global Settings
+global:
+  # Default timeout for network operations (seconds)
+  default_timeout: 30
+  
+  # Number of threads for multithreaded operations
+  default_threads: 40
+  
+  # Output settings
+  output:
+    # Enable/disable colored output
+    colored_output: true
+    
+    # Verbosity level: DEBUG, INFO, WARNING, ERROR
+    log_level: INFO
+    
+    # Save raw outputs alongside parsed results
+    save_raw_output: true
+    
+    # Report formats to generate: json, html, both
+    report_formats: both
+
+# Nmap Scanner Settings
+nmap:
+  # Default scan arguments
+  default_args: "-sV"
+  
+  # Scan type configurations
+  scan_types:
+    default: "-sV"
+    syn: "-sS -sV"
+    udp: "-sU -sV --top-ports 1000"
+    aggressive: "-A -sV -O"
+    stealth: "-sS -sV -f -T2"
+    discovery: "-sn"
+  
+  # Timeout settings
+  timeout: 300
+  
+  # Host discovery timeout
+  host_timeout: 30
+  
+  # Enable/disable ping before scan
+  skip_ping: false
+  
+  # NSE script categories to run by default
+  default_nse_scripts: ""
+  
+  # Custom NSE script directory (leave empty for default)
+  nse_script_dir: ""
+
+# SSL Scanner Settings
+ssl:
+  # Default port to scan
+  default_port: 443
+  
+  # Additional ports to check for SSL/TLS
+  additional_ports: [8443, 8080, 9443]
+  
+  # Connection timeout
+  timeout: 15
+  
+  # Certificate expiration warning thresholds (days)
+  expiry_warning:
+    critical: 7    # Red warning
+    warning: 30    # Yellow warning
+  
+  # SSL/TLS versions to test
+  test_versions: [
+    "TLSv1.2",
+    "TLSv1.3"
+  ]
+  
+  # Check for weak ciphers
+  check_weak_ciphers: true
+
+# WHOIS Lookup Settings
+whois:
+  # Timeout for WHOIS queries
+  timeout: 20
+  
+  # Fallback to system whois if python-whois fails
+  use_system_fallback: true
+  
+  # WHOIS servers for specific TLDs (optional overrides)
+  custom_servers: {}
+    # example.com: whois.example.com
+  
+  # Enable deep WHOIS (follow referrals)
+  deep_lookup: false
+
+# WAF Detection Settings
+waf:
+  # Timeout for HTTP requests
+  timeout: 15
+  
+  # Use wafw00f if available
+  use_wafw00f: true
+  
+  # wafw00f timeout
+  wafw00f_timeout: 60
+  
+  # HTTP request settings
+  http:
+    # User agent string
+    user_agent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    
+    # Follow redirects
+    follow_redirects: true
+    
+    # Max redirects to follow
+    max_redirects: 5
+    
+    # Verify SSL certificates
+    verify_ssl: false
+  
+  # Test payloads for WAF detection
+  test_payloads:
+    - "' OR '1'='1"
+    - "<script>alert(1)</script>"
+    - "../../etc/passwd"
+    - "UNION SELECT"
+  
+  # Custom WAF signatures (extend built-in detection)
+  custom_signatures: {}
+
+# Web Reconnaissance Settings
+web_recon:
+  # Default wordlist paths (in order of preference)
+  wordlists:
+    - "/usr/share/wordlists/dirb/common.txt"
+    - "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"
+    - "/home/admin-1/Desktop/common.txt"
+    - "./wordlists/common.txt"
+  
+  # Default file extensions to test
+  default_extensions: "php,html,htm,asp,aspx,jsp,js,txt,xml,json,bak,old,zip,tar.gz"
+  
+  # ffuf settings
+  ffuf:
+    # Number of threads
+    threads: 40
+    
+    # Request timeout
+    timeout: 10
+    
+    # Rate limit (requests per second, 0 = unlimited)
+    rate_limit: 0
+    
+    # Follow redirects
+    follow_redirects: false
+    
+    # HTTP status codes to match (comma-separated)
+    match_codes: "200,204,301,302,307,401,403,405,500"
+    
+    # Response size filters
+    filter_size: ""
+    
+    # Response word count filters
+    filter_words: ""
+    
+    # Custom headers
+    headers: {}
+      # Authorization: "Bearer token"
+  
+  # Subdirectory recursion
+  recursive_scan: false
+  recursive_depth: 2
+
+# Subdomain Enumeration Settings (for future implementation)
+subdomain_enum:
+  # DNS timeout
+  dns_timeout: 5
+  
+  # Subdomain wordlists
+  wordlists:
+    - "/usr/share/wordlists/amass/subdomains.txt"
+    - "./wordlists/subdomains.txt"
+  
+  # DNS resolvers to use
+  resolvers:
+    - "8.8.8.8"
+    - "8.8.4.4"
+    - "1.1.1.1"
+    - "1.0.0.1"
+  
+  # Use external APIs
+  use_apis: true
+  
+  # API keys (store in environment variables for security)
+  api_keys:
+    shodan_api_key: "${SHODAN_API_KEY}"
+    censys_api_key: "${CENSYS_API_KEY}"
+    virustotal_api_key: "${VIRUSTOTAL_API_KEY}"
+  
+  # Tools to use (if available)
+  tools:
+    - "subfinder"
+    - "assetfinder"
+    - "amass"
+
+# Directory Bruteforcing Settings (for future implementation)  
+dirbrute:
+  # Wordlists for directory bruteforcing
+  wordlists:
+    - "/usr/share/wordlists/dirb/common.txt"
+    - "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"
+  
+  # File extensions to bruteforce
+  extensions: "php,html,htm,asp,aspx,jsp,txt,xml,json"
+  
+  # Recursive scanning
+  recursive: true
+  max_depth: 3
+  
+  # Threading
+  threads: 20
+  
+  # Request settings
+  timeout: 10
+  delay: 0  # Delay between requests (seconds)
+
+# Reporting Settings
+reporting:
+  # Output directory for reports
+  output_dir: "./reports"
+  
+  # Report naming convention: timestamp, target, or both
+  naming_convention: "both"  # timestamp, target, both
+  
+  # Automatically open HTML reports in browser
+  auto_open_reports: false
+  
+  # Include screenshots in reports (future feature)
+  include_screenshots: false
+  
+  # Report templates directory
+  template_dir: "./templates"
+  
+  # Custom CSS for HTML reports
+  custom_css: ""
+  
+  # Report retention (days, 0 = keep forever)
+  retention_days: 90
+
+# Network Settings
+network:
+  # Proxy settings (HTTP/HTTPS)
+  proxy:
+    enabled: false
+    http_proxy: ""
+    https_proxy: ""
+    no_proxy: "localhost,127.0.0.1"
+  
+  # Custom DNS servers
+  dns_servers: []
+    # - "8.8.8.8"
+    # - "8.8.4.4"
+  
+  # Source IP for scans (bind to specific interface)
+  source_ip: ""
+  
+  # Rate limiting
+  rate_limit:
+    enabled: false
+    requests_per_second: 10
+
+# Security Settings
+security:
+  # Disable dangerous operations
+  safe_mode: false
+  
+  # Allowed target networks (CIDR notation)
+  allowed_networks:
+    - "10.0.0.0/8"
+    - "172.16.0.0/12"
+    - "192.168.0.0/16"
+    - "127.0.0.0/8"
+  
+  # Blocked networks (takes precedence over allowed)
+  blocked_networks: []
+  
+  # Require confirmation for external scans
+  confirm_external_scans: true
+
+# Plugin Settings (for future extensibility)
+plugins:
+  # Directory to load custom plugins from
+  plugin_dir: "./plugins"
+  
+  # Enabled plugins
+  enabled: []
+  
+  # Plugin-specific settings
+  settings: {}
+
+# Database Settings (for future implementation)
+database:
+  # Database type: sqlite, postgresql, mysql
+  type: "sqlite"
+  
+  # Database connection settings
+  connection:
+    host: "localhost"
+    port: 5432
+    database: "pentoolkit"
+    username: "${DB_USERNAME}"
+    password: "${DB_PASSWORD}"
+  
+  # SQLite file path (if using sqlite)
+  sqlite_path: "./data/pentoolkit.db"
+  
+  # Enable result caching
+  enable_caching: true
+  cache_ttl: 3600  # seconds
+
+# Notification Settings (for future implementation)
+notifications:
+  # Enable notifications
+  enabled: false
+  
+  # Notification channels
+  channels:
+    email:
+      enabled: false
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      username: "${EMAIL_USERNAME}"
+      password: "${EMAIL_PASSWORD}"
+      from_address: "pentoolkit@example.com"
+      to_addresses: []
+    
+    slack:
+      enabled: false
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+    
+    discord:
+      enabled: false
+      webhook_url: "${DISCORD_WEBHOOK_URL}"
+  
+  # When to send notifications
+  notify_on:
+    - "scan_complete"
+    - "critical_findings"
+    - "errors"

@@ -1,0 +1,17 @@
+[project]
+name = "pentoolkit"
+version = "0.2.0"
+description = "A CLI toolkit for web pentesting automation"
+authors = [{ name="Your Name", email="you@example.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "typer",
+    "rich",
+    "requests",
+    "python-nmap",
+    "PyYAML"
+]
+
+[project.scripts]
+pentoolkit = "pentoolkit.cli:app"

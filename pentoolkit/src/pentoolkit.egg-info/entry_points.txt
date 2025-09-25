@@ -1,0 +1,2 @@
+[console_scripts]
+pentoolkit = pentoolkit.cli:app

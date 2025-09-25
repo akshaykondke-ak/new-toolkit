@@ -1,0 +1,14 @@
+# Pentoolkit Configuration
+web_recon:
+  wordlists:
+    - "/home/admin-1/Desktop/common.txt"
+    - "/home/admin-1/Desktop/common.txt"
+  default_extensions: "php,html,htm,asp,aspx,jsp"
+
+nmap:
+  default_args: "-sV -p-"
+  timeout: 300
+
+ssl:
+  default_port: 443
+  timeout: 15
