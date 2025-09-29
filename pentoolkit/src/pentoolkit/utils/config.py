@@ -5,9 +5,34 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 
-# Determine the project root directory
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
-DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config.yaml"
+# Configuration file locations (in priority order)
+CONFIG_LOCATIONS = [
+    # 1. Current working directory (highest priority)
+    Path.cwd() / "pentoolkit.yaml",
+    Path.cwd() / "config.yaml",
+    
+    # 2. User's home directory
+    Path.home() / ".pentoolkit" / "config.yaml",
+    Path.home() / ".config" / "pentoolkit" / "config.yaml",
+    
+    # 3. System-wide (lowest priority)
+    Path("/etc/pentoolkit/config.yaml"),
+    
+    # 4. Package default (fallback)
+    Path(__file__).parent.parent / "config.yaml"
+]
+
+def find_config_file() -> Optional[Path]:
+    """Find the first existing config file from priority locations"""
+    for config_path in CONFIG_LOCATIONS:
+        if config_path.exists():
+            return config_path
+    return None
+
+def get_default_config_path() -> Path:
+    """Get the default path where config should be created"""
+    # Use current working directory as default
+    return Path.cwd() / "pentoolkit.yaml"
 
 # Environment variable substitution
 def _substitute_env_vars(value: Any) -> Any:
@@ -31,7 +56,6 @@ def _substitute_env_vars(value: Any) -> Any:
     else:
         return value
 
-
 @dataclass
 class GlobalConfig:
     """Global configuration settings."""
@@ -43,7 +67,6 @@ class GlobalConfig:
         "save_raw_output": True,
         "report_formats": "both"
     })
-
 
 @dataclass 
 class NmapConfig:
@@ -63,7 +86,6 @@ class NmapConfig:
     default_nse_scripts: str = ""
     nse_script_dir: str = ""
 
-
 @dataclass
 class SslConfig:
     """SSL scanner configuration."""
@@ -77,7 +99,6 @@ class SslConfig:
     test_versions: List[str] = field(default_factory=lambda: ["TLSv1.2", "TLSv1.3"])
     check_weak_ciphers: bool = True
 
-
 @dataclass
 class WhoisConfig:
     """WHOIS lookup configuration."""
@@ -85,7 +106,6 @@ class WhoisConfig:
     use_system_fallback: bool = True
     custom_servers: Dict[str, str] = field(default_factory=dict)
     deep_lookup: bool = False
-
 
 @dataclass
 class WafConfig:
@@ -106,7 +126,6 @@ class WafConfig:
         "UNION SELECT"
     ])
     custom_signatures: Dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class WebReconConfig:
@@ -131,7 +150,6 @@ class WebReconConfig:
     recursive_scan: bool = False
     recursive_depth: int = 2
 
-
 @dataclass
 class ReportingConfig:
     """Reporting configuration."""
@@ -142,7 +160,6 @@ class ReportingConfig:
     template_dir: str = "./templates"
     custom_css: str = ""
     retention_days: int = 90
-
 
 @dataclass
 class NetworkConfig:
@@ -160,7 +177,6 @@ class NetworkConfig:
         "requests_per_second": 10
     })
 
-
 @dataclass
 class SecurityConfig:
     """Security configuration."""
@@ -169,24 +185,35 @@ class SecurityConfig:
         "10.0.0.0/8",
         "172.16.0.0/12", 
         "192.168.0.0/16",
-        "127.0.0.0/8"
+        "127.0.0.0/8",
+        "0.0.0.0/0"  # Allow all networks by default
     ])
     blocked_networks: List[str] = field(default_factory=list)
     confirm_external_scans: bool = True
-
 
 class ConfigManager:
     """Manages configuration loading and access."""
     
     def __init__(self, config_path: Optional[Path] = None):
-        self.config_path = config_path or DEFAULT_CONFIG_PATH
+        if config_path:
+            self.config_path = config_path
+        else:
+            # Find existing config or use default location
+            found_config = find_config_file()
+            self.config_path = found_config or get_default_config_path()
+        
         self._config_data: Dict[str, Any] = {}
         self.load_config()
     
     def load_config(self) -> None:
         """Load configuration from YAML file."""
         if not self.config_path.exists():
-            print(f"[!] Config file not found at {self.config_path}, using defaults")
+            print(f"[!] Config file not found at {self.config_path}")
+            print(f"[!] Searched locations:")
+            for loc in CONFIG_LOCATIONS[:4]:  # Don't show system paths
+                print(f"    - {loc}")
+            print(f"[!] Using default configuration")
+            print(f"[+] Run 'pentoolkit config create' to create a config file")
             self._config_data = {}
             return
         
@@ -200,6 +227,23 @@ class ConfigManager:
             print(f"[!] Error loading config file {self.config_path}: {e}")
             print("[!] Using default configuration")
             self._config_data = {}
+    
+    def save_config(self, config_data: Dict[str, Any]) -> bool:
+        """Save configuration to file"""
+        try:
+            # Ensure directory exists
+            self.config_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(self.config_path, 'w') as f:
+                yaml.dump(config_data, f, default_flow_style=False, indent=2)
+            print(f"[+] Configuration saved to {self.config_path}")
+            
+            # Reload the config
+            self.load_config()
+            return True
+        except Exception as e:
+            print(f"[!] Failed to save configuration: {e}")
+            return False
     
     def get_section(self, section: str, default: Dict = None) -> Dict[str, Any]:
         """Get a configuration section."""
@@ -346,9 +390,8 @@ class ConfigManager:
         import socket
         
         security = self.security_config
-        return True
         
-        # Skip validation in safe mode
+        # Skip validation in safe mode - but note this was bypassed before
         if security.safe_mode:
             return True
         
@@ -367,6 +410,10 @@ class ConfigManager:
             
             # Check allowed networks
             if security.allowed_networks:
+                # Check if 0.0.0.0/0 is in allowed (means allow all)
+                if "0.0.0.0/0" in security.allowed_networks:
+                    return True
+                    
                 for allowed_net in security.allowed_networks:
                     if ip in ipaddress.ip_network(allowed_net, strict=False):
                         return True
@@ -374,10 +421,10 @@ class ConfigManager:
             
             return True  # No restrictions
             
-        except Exception:
+        except Exception as e:
+            print(f"[!] Network validation error: {e}")
             # If we can't determine the IP, allow it (user responsibility)
             return True
-
 
 # Global config manager instance
 config_manager = ConfigManager()
@@ -398,3 +445,89 @@ def get_wordlist_path(wordlist_paths: List[str]) -> str:
     if found:
         return found
     return wordlist_paths[0] if wordlist_paths else "/usr/share/wordlists/dirb/common.txt"
+
+def create_default_config(config_path: Path = None) -> bool:
+    """Create a default configuration file"""
+    if config_path is None:
+        config_path = get_default_config_path()
+    
+    default_config_content = {
+        'global': {
+            'default_timeout': 30,
+            'default_threads': 40,
+            'output': {
+                'colored_output': True,
+                'log_level': 'INFO',
+                'save_raw_output': True,
+                'report_formats': 'both'
+            }
+        },
+        'nmap': {
+            'default_args': '-sV',
+            'scan_types': {
+                'default': '-sV',
+                'syn': '-sS -sV',
+                'udp': '-sU -sV --top-ports 1000',
+                'aggressive': '-A -sV -O',
+                'stealth': '-sS -sV -f -T2',
+                'discovery': '-sn'
+            },
+            'timeout': 300,
+            'host_timeout': 30,
+            'skip_ping': False
+        },
+        'ssl': {
+            'default_port': 443,
+            'additional_ports': [8443, 8080, 9443],
+            'timeout': 15,
+            'expiry_warning': {
+                'critical': 7,
+                'warning': 30
+            },
+            'test_versions': ['TLSv1.2', 'TLSv1.3'],
+            'check_weak_ciphers': True
+        },
+        'web_recon': {
+            'wordlists': [
+                '/usr/share/wordlists/dirb/common.txt',
+                '/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt',
+                '/home/admin-1/Desktop/common.txt',
+                './wordlists/common.txt'
+            ],
+            'default_extensions': 'php,html,htm,asp,aspx,jsp,js,txt,xml,json,bak',
+            'ffuf': {
+                'threads': 40,
+                'timeout': 10,
+                'rate_limit': 0,
+                'match_codes': '200,204,301,302,307,401,403,405,500'
+            }
+        },
+        'security': {
+            'safe_mode': False,
+            'allowed_networks': [
+                '10.0.0.0/8',
+                '172.16.0.0/12',
+                '192.168.0.0/16',
+                '127.0.0.0/8',
+                '0.0.0.0/0'  # Allow all networks
+            ],
+            'blocked_networks': [],
+            'confirm_external_scans': True
+        },
+        'reporting': {
+            'output_dir': './reports',
+            'naming_convention': 'both',
+            'auto_open_reports': False,
+            'retention_days': 90
+        }
+    }
+    
+    try:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(config_path, 'w') as f:
+            yaml.dump(default_config_content, f, default_flow_style=False, indent=2)
+        print(f"[+] Default configuration created at {config_path}")
+        return True
+    except Exception as e:
+        print(f"[!] Failed to create config file: {e}")
+        return False

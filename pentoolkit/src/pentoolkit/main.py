@@ -7,6 +7,13 @@ def run_scan(target: str, modules: str = "all", scan_type: str = "default", nse:
     """
     selected_modules = modules.split(",") if modules != "all" else ["nmap", "ssl", "whois", "waf", "web_recon"]
     results_summary = {}
+    def safe_call(name, fn, *args, **kwargs):
+        try:
+            res = fn(*args, **kwargs)
+            return {"ok": True, "result": res, "error": None}
+        except Exception as e:
+            import traceback
+            return {"ok": False, "result": None, "error": traceback.format_exc()}
 
     if "nmap" in selected_modules:
         print(f"[NMAP] Running scan on {target}")

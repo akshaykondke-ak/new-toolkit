@@ -70,6 +70,7 @@ ssl:
   
   # SSL/TLS versions to test
   test_versions: [
+    TLSv1,
     "TLSv1.2",
     "TLSv1.3"
   ]
@@ -131,10 +132,10 @@ waf:
 web_recon:
   # Default wordlist paths (in order of preference)
   wordlists:
+    - "/usr/share/wordlists/dirb/common.txt"
+    - "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"
     - "/home/admin-1/Desktop/common.txt"
-    - "/home/admin-1/Desktop/common.txt"
-    - "/home/admin-1/Desktop/common.txt"
-    - "/home/admin-1/Desktop/common.txt"
+    - "./wordlists/common.txt"
   
   # Default file extensions to test
   default_extensions: "php,html,htm,asp,aspx,jsp,js,txt,xml,json,bak,old,zip,tar.gz"
@@ -177,8 +178,8 @@ subdomain_enum:
   
   # Subdomain wordlists
   wordlists:
-    - "/home/admin-1/Desktop/common.txt"
-    - "/home/admin-1/Desktop/common.txt"
+    - "/usr/share/wordlists/amass/subdomains.txt"
+    - "./wordlists/subdomains.txt"
   
   # DNS resolvers to use
   resolvers:
@@ -206,8 +207,8 @@ subdomain_enum:
 dirbrute:
   # Wordlists for directory bruteforcing
   wordlists:
-    - "/home/admin-1/Desktop/common.txt"
-    - "/home/admin-1/Desktop/common.txt"
+    - "/usr/share/wordlists/dirb/common.txt"
+    - "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"
   
   # File extensions to bruteforce
   extensions: "php,html,htm,asp,aspx,jsp,txt,xml,json"
@@ -271,7 +272,7 @@ network:
 # Security Settings
 security:
   # Disable dangerous operations
-  safe_mode: true
+  safe_mode: false
   
   # Allowed target networks (CIDR notation)
   allowed_networks:
@@ -279,14 +280,13 @@ security:
     - "172.16.0.0/12"
     - "192.168.0.0/16"
     - "127.0.0.0/8"
-    - "0.0.0.0/0"
   
   # Blocked networks (takes precedence over allowed)
   blocked_networks: []
   
   # Require confirmation for external scans
   confirm_external_scans: true
-EOF # End of File
+
 # Plugin Settings (for future extensibility)
 plugins:
   # Directory to load custom plugins from

@@ -1,12 +1,12 @@
 # Pentoolkit Configuration
 web_recon:
   wordlists:
-    - "/home/admin-1/Desktop/common.txt"
+    - "/usr/share/wordlists/dirb/common.txt"
     - "/home/admin-1/Desktop/common.txt"
   default_extensions: "php,html,htm,asp,aspx,jsp"
 
 nmap:
-  default_args: "-sV -p-"
+  default_args: "-sV"
   timeout: 300
 
 ssl:
